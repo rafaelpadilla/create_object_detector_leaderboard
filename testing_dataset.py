@@ -1,6 +1,7 @@
 # Example: 
 # python testing_dataset.py --path_models_csv ~/my_files/object_detection_models-08-08-2023.csv --output_folder ~/my_files/results
 
+from fire import Fire
 import evaluate
 from datasets import load_dataset
 import torch
@@ -21,7 +22,7 @@ MODELS_TO_SKIP = ["nielsr/deta-swin-large", "nielsr/deta-resnet-50",
                   "hf-internal-testing/tiny-random-yolos", "nielsr/detr-resnet-50-new", 
                   "api19750904/cupra", "connorhoehn/detr_trading_card_display_detection_v1", 
                   "Amogh06/detr-for-table-detection", "Amogh06/detr-for-table-detection-v3", 
-                  "nielsr/detr-finetuned-boat-detection"]
+                  "nielsr/detr-finetuned-boat-detection", "SenseTime/deformable-detr-with-box-refine-two-stage"]
 
 COCO_IGNORED_CLASSES = [
         "None",
@@ -51,10 +52,8 @@ def benchmark_model(model_id, device, loaded_json_gts, coco_gt, batch_size):
     print(f"\nEvaluation of model {model_id} started:")
     
     # Clean classes
-    loaded_json_gts["categories"] = [cat for cat in loaded_json_gts["categories"] if cat["name"] not in COCO_IGNORED_CLASSES]
     evaluator = evaluate.load("rafaelpadilla/detection_metrics", json_gt=loaded_json_gts, iou_type="bbox")
     # Clean classes
-    evaluator.remove_classes(COCO_IGNORED_CLASSES)
 
     # Prepare dataloader
     num_workers = multiprocessing.cpu_count()
@@ -66,6 +65,7 @@ def benchmark_model(model_id, device, loaded_json_gts, coco_gt, batch_size):
     with torch.no_grad():
         pbar = tqdm(val_dataloader, desc="Evaluating batches")
         for idx, batch in enumerate(pbar):
+            
             predictions = model_predictor.predict_boxes(batch)
             
             # Fix labels mappings
@@ -84,6 +84,7 @@ def benchmark_model(model_id, device, loaded_json_gts, coco_gt, batch_size):
             
             del batch
 
+    print(f"Results model: {model_id}")
     results = evaluator.compute()
     return results
 
@@ -156,16 +157,18 @@ def main(path_models_csv: Path, output_folder: Path, dataset_name: str = "rafael
         if len(matching_files) > 0:
             continue
         
-        # Run benchmark
-        metrics = benchmark_model(model_id = model_id,
-                                device=device, 
-                                loaded_json_gts=loaded_json_gts, 
-                                coco_gt=coco_gt,
-                                batch_size=batch_size)
-        # Save
-        with open(fp, "w") as file:
-            json.dump(metrics, file, indent=4)
+        try:
+            # Run benchmark
+            metrics = benchmark_model(model_id = model_id,
+                                    device=device, 
+                                    loaded_json_gts=loaded_json_gts, 
+                                    coco_gt=coco_gt,
+                                    batch_size=batch_size)
+            # Save
+            with open(fp, "w") as file:
+                json.dump(metrics, file, indent=4)
+        except Exception as e:
+            print(f"{e}: Error model {model_id}")
 
 if __name__ == '__main__':
-    main()
-    
+    Fire(main)  

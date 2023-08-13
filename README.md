@@ -32,3 +32,11 @@ To generate it, run the following command:
 ```
 python scripts/testing_dataset.py --path_models_csv path_to/object_detection_models-MM-DD-YYYY_HH_MM_SS.csv --output_folder path_to/results_folder --dataset_name rafaelpadilla/coco2017
 ```
+
+### Compile all results in a single csv
+
+Once the results of the desired models are computed, we run `compile_results.py` to create a unique csv files gathering the results of models.
+
+```
+python scripts/compile_results.py --dir_results output_folder path_to/results_folder --output_csv output_folder path_to/results_folder/results.csv
+```
