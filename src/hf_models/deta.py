@@ -1,18 +1,18 @@
 from .base import ModelEvaluator
 from src.utils.basics import convert_to_xywh
-from transformers import AutoImageProcessor
+from transformers import DetaImageProcessor
 
 class Deta(ModelEvaluator):
     """ Class for evaluating object detection with Deta."""
     
     def __init__(self, model_obj, model_id: str, device: str, return_batch: bool = False, threshold: float = 0.):
-        im_processor_initiator = AutoImageProcessor.from_pretrained
+        im_processor_initiator = DetaImageProcessor.from_pretrained
         super().__init__(model_obj, model_id, device, im_processor_initiator, return_batch, threshold)
     
     def _collate_fn(self, batch):
         images = [sample["image"] for sample in batch]
         orig_sizes = [sample["image"].size[::-1] for sample in batch]  # h, w
-        # Detr: sample["target"] must be a dict containing 
+        # Deta: sample["target"] must be a dict containing 
         #           "image_id" (str) and "annotations" (List[Dict])
         # target = [sample["target"] for sample in batch]
         encoding = self.im_processor(images=images, return_tensors="pt")
@@ -40,7 +40,7 @@ class Deta(ModelEvaluator):
         # forward pass
         outputs = self.model(pixel_values=pixel_values, pixel_mask=pixel_mask)
         # Provide target_size to obtain boxes in absolute format
-        predictions = self.im_processor.post_process_object_detection(outputs=outputs, target_sizes=orig_sizes, threshold=self.threshold) 
+        predictions = self.im_processor.post_process_object_detection(outputs=outputs, target_sizes=orig_sizes, threshold=self.threshold, nms_threshold=0.7) 
         for idx, pred_batch in enumerate(predictions):
             # Originally boxes boxes are in xyx2y2 format. COCO evaluator requires xywh
             boxes_xywh = convert_to_xywh(pred_batch["boxes"])
