@@ -1,10 +1,13 @@
-from typing import Dict
+import os
 from src.utils.basics import map_func
 from src.utils.model_initiators import initiate_model, get_classes_from_model
+from src.utils.basics import get_current_date_time
 import huggingface_hub as hf_hub
 import pandas as pd
 from tqdm import tqdm
-from src.utils.basics import get_current_date_time
+
+HUB_ACCESS_TOKEN = os.getenv("HUB_ACCESS_TOKEN", None)
+assert HUB_ACCESS_TOKEN, f"Environment variable 'HUB_API_TOKEN' not set."
 
 _ACCEPTED_FILTERS = ["object-detection"]
 
@@ -33,10 +36,11 @@ def get_models_from_hub(filter="object-detection") -> pd.DataFrame:
     obj_det_models = hf_hub.list_models(filter=filter, sort="likes", direction=-1)
     obj_det_models = list(obj_det_models)
 
-    dict_data = {"_id": [], "id": [], "author": [], "downloads": [], "lastModified": [], "library_name": [], "likes": [], "output_classes": []}
+    dict_data = {"_id": [], "id": [], "author": [], "downloads": [], "lastModified": [], "library_name": [], "likes": [], "output_classes": [], "hub_license": []}
     pbar = tqdm(obj_det_models, total=len(obj_det_models))
     for model in pbar:
         pbar.set_description(f"Fetching model {model.id}")
+
         dict_data["_id"].append(model._id)
         dict_data["id"].append(model.id)
         dict_data["author"].append(model.author)
@@ -45,6 +49,17 @@ def get_models_from_hub(filter="object-detection") -> pd.DataFrame:
         library_name = model.library_name if hasattr(model, "library_name") else ""
         dict_data["library_name"].append(library_name)
         dict_data["likes"].append(model.likes)
+        # Hub license
+        hub_license = ""
+        try:
+            model_info = hf_hub.model_info(model.id, token=HUB_ACCESS_TOKEN)
+            if hasattr(model_info, "cardData"):
+                card_data = model_info.cardData
+                hub_license = card_data["license"] if "license" in card_data else hub_license
+        except Exception as ex:
+            print(f"Exception {ex}")
+            
+        dict_data["hub_license"].append(hub_license)
         # Get classes output by the model sorted by id
         output_classes = get_models_output_classes(model.id)
         dict_data["output_classes"].append(output_classes)
@@ -63,7 +78,9 @@ def main(model_type: str = "object-detection"):
 
     # Save to CSV
     current_date_time = get_current_date_time()
-    df_models.to_csv(f"object_detection_models-{current_date_time}.csv", index=False)
+    fp = f"object_detection_models-{current_date_time}.csv"
+    df_models.to_csv(fp, index=False)
+    print(f"File {fp} created with success!")
 
 if __name__ == "__main__":
     main()
