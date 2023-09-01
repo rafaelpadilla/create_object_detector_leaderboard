@@ -1,5 +1,5 @@
 
-![alt text](http://url/to/img.png)
+![layout](https://github.com/rafaelpadilla/create_object_detector_leaderboard/blob/main/assets/leaderboard.png?raw=true "Title")
 
 # Object Detection Leaderboard
 
