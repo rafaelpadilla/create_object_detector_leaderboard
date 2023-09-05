@@ -5,4 +5,3 @@ except:
     print("Error importing dotenv")
     
 __version__ = "0.0.3"
-
