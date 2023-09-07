@@ -178,4 +178,4 @@ pyrightconfig.json
 #
 images_with_boxes/
 *.csv
-
+.vscode/
