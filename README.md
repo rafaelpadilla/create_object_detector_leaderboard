@@ -30,7 +30,7 @@ To run the metrics of the models listed in `object_detection_models-MM-DD-YYYY_H
 
 To generate it, run the following command:
 ```
-python scripts/testing_dataset.py --path_models_csv path_to/object_detection_models-MM-DD-YYYY_HH_MM_SS.csv --output_folder path_to/results_folder --dataset_name rafaelpadilla/coco2017
+python scripts/evaluate_models.py --path_models_csv path_to/object_detection_models-MM-DD-YYYY_HH_MM_SS.csv --output_folder path_to/results_folder --dataset_name rafaelpadilla/coco2017
 ```
 
 ### Step 3: Compile all results in a single csv

@@ -1,5 +1,5 @@
 # Example: 
-# python scripts/testing_dataset.py --path_models_csv ~/my_files/object_detection_models-May-26-2023.csv --output_folder ~/my_files/results
+# python scripts/evaluate_models.py --path_models_csv ~/my_files/object_detection_models-May-26-2023.csv --output_folder ~/my_files/results
 from fire import Fire
 import evaluate
 from datasets import load_dataset
